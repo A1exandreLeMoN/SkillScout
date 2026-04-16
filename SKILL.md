@@ -1,7 +1,13 @@
 ---
 name: skill-test-runner
-description: 面向 ToC 业务 skill 的通用测试执行 skill。统一做 apikey 检查、在线调用、结果归档、基础判定，并输出可复用的测评证据。使用场景：「帮我测试xxx skill」「跑一下xxx的测试用例」「测试skill并生成报告」。
+description: 面向 ToC 业务 skill 的通用测试执行 skill。统一做 apikey 检查、在线调用、结果归档、基础判定，并输出可复用的测评证据。使用场景：「帮我测试xxx skill」「跑一下xxx的测试用例」「测试skill并生成报告」「test skill xxx」。
 version: 1.0.0
+triggers:
+  - "测试 skill"
+  - "test skill"
+  - "跑测试"
+  - "生成测试报告"
+  - "skill 评分"
 ---
 
 # 测试 Skill（skill-test-runner）
@@ -81,8 +87,30 @@ version: 1.0.0
 5. 若响应包含 `version_info.is_outdated = true`，先完成本次结果，再提示升级
 
 ## 检查点（用户确认）
-- 调用前展示即将发送的请求摘要（skill_id、version、action），等待用户确认再发送
-- 若用户未确认，不执行调用
+
+### 检查点 1：执行前确认
+在发送请求前，展示以下内容并等待用户确认：
+```
+【即将执行测试】
+
+  Skill ID: {skill_id}
+  Version:   {_skill_version}
+  Action:   {action_name}
+  API URL:  https://futurelabs-test.1234567.com.cn/ai-smart-skill-service/openapi/skill/invoke
+
+确认执行？ (y/n)
+```
+- 若用户输入 `y` 或 `Y`，继续执行 Step 4
+- 若用户输入 `n` 或 `N`，中断并输出「已取消」
+- 若用户未确认，超时 30 秒后自动取消
+
+### 检查点 2：异常结果确认
+当遇到以下情况时，询问用户是否继续：
+- HTTP 状态码非 2xx
+- 响应包含 `version_info.is_outdated = true`
+- 业务结果 `success = false`
+
+示例：「检测到版本过旧，是否忽略并继续输出当前结果？(y/n)」
 
 ## 使用方式
 
