@@ -1011,61 +1011,94 @@ function Render-ReportMarkdown {
   $lines += ("- Action 必填字段: {0}" -f (($Result.diagnostics.action_schema_required_fields -join '、') -replace '^$', '无'))
   $lines += ("- Action 推荐字段: {0}" -f (($Result.diagnostics.action_schema_recommended_fields -join '、') -replace '^$', '无'))
   $lines += ("- Action 变体: {0}" -f (($Result.diagnostics.action_schema_variant_names -join '、') -replace '^$', '无'))
- $lines += ("- HTTP Status: {0}" -f $Result.diagnostics.http_status)
- $lines += ("- Case 总数: {0}" -f $Result.diagnostics.case_count)
- $lines += ("- 手工 Case: {0}" -f $Result.diagnostics.manual_case_count)
- $lines += ("- 自动生成 Case: {0}" -f $Result.diagnostics.generated_case_count)
- $lines += ("- 已执行 Case: {0}" -f $Result.diagnostics.executed_case_count)
- $lines += ("- 通过: {0}" -f $Result.diagnostics.pass_count)
- $lines += ("- 失败: {0}" -f $Result.diagnostics.fail_count)
- $lines += ("- 需复核: {0}" -f $Result.diagnostics.review_needed_count)
- $lines += ("- 跳过: {0}" -f $Result.diagnostics.skipped_count)
- $lines += ("- 总体判定: {0}" -f $Result.diagnostics.overall_judgement)
- $lines += ("- 覆盖完整性: {0}" -f $Result.diagnostics.coverage_complete)
- $lines += ("- Action 完整性: {0}" -f $Result.diagnostics.action_complete)
- $lines += ''
-  $lines += '## 2. 覆盖摘要'
+  $lines += ("- HTTP Status: {0}" -f $Result.diagnostics.http_status)
+  $lines += ("- Case 总数: {0}" -f $Result.diagnostics.case_count)
+  $lines += ("- 手工 Case: {0}" -f $Result.diagnostics.manual_case_count)
+  $lines += ("- 自动生成 Case: {0}" -f $Result.diagnostics.generated_case_count)
+  $lines += ("- 已执行 Case: {0}" -f $Result.diagnostics.executed_case_count)
+  $lines += ("- 通过: {0}" -f $Result.diagnostics.pass_count)
+  $lines += ("- 失败: {0}" -f $Result.diagnostics.fail_count)
+  $lines += ("- 需复核: {0}" -f $Result.diagnostics.review_needed_count)
+  $lines += ("- 跳过: {0}" -f $Result.diagnostics.skipped_count)
+  $lines += ("- 总体判定: {0}" -f $Result.diagnostics.overall_judgement)
+  $lines += ("- 执行健康: {0}" -f $Result.diagnostics.execution_health)
+  $lines += ("- 执行错误: {0}" -f $Result.diagnostics.execution_error_count)
+  $lines += ("- 传输错误: {0}" -f $Result.diagnostics.transport_error_count)
+  $lines += ("- HTTP 错误: {0}" -f $Result.diagnostics.http_error_count)
+  $lines += ("- 无响应/无状态码: {0}" -f $Result.diagnostics.missing_response_count)
+  $lines += ("- 覆盖完整性: {0}" -f $Result.diagnostics.coverage_complete)
+  $lines += ("- Action 完整性: {0}" -f $Result.diagnostics.action_complete)
+  $lines += ''
+  $lines += '## 2. 执行健康'
+  $lines += '| 指标 | 数值 |'
+  $lines += '| --- | ---: |'
+  $lines += ("| 执行健康 | {0} |" -f $Result.diagnostics.execution_health)
+  $lines += ("| 执行错误 | {0} |" -f $Result.diagnostics.execution_error_count)
+  $lines += ("| 传输错误 | {0} |" -f $Result.diagnostics.transport_error_count)
+  $lines += ("| HTTP 错误 | {0} |" -f $Result.diagnostics.http_error_count)
+  $lines += ("| 无响应/无状态码 | {0} |" -f $Result.diagnostics.missing_response_count)
+  $lines += ("| 执行错误用例 | {0} |" -f (($Result.execution_summary.execution_error_case_ids -join '、') -replace '^$', '无'))
+  if ([int]$Result.diagnostics.execution_error_count -gt 0) {
+    $lines += ''
+    $lines += '> 注意：存在执行层错误时，覆盖率不能替代执行结果。请先修复网络、网关或插件异常，再解读业务结论。'
+  }
+  $lines += ''
+  $lines += '## 3. 覆盖摘要'
   $lines += '| 类型 | 是否完整 | 缺口 |'
   $lines += '| --- | --- | --- |'
   $lines += ("| 能力 | {0} | {1} |" -f $Result.coverage.coverage_complete, (($Result.coverage.missing_required_tags -join '、') -replace '^$', '无'))
   $lines += ("| Action | {0} | {1} |" -f $Result.action_coverage.action_complete, (($Result.action_coverage.missing_required_actions -join '、') -replace '^$', '无'))
   $lines += ''
-  $lines += '## 3. Action 覆盖明细'
+  $lines += '## 4. Action 覆盖明细'
   $lines += '| Action ID | 名称 | 必测 | 是否覆盖 | 命中 Case | 风险 |'
   $lines += '| --- | --- | --- | --- | --- | --- |'
   foreach ($item in $Result.action_coverage.details) {
     $lines += ('| {0} | {1} | {2} | {3} | {4} | {5} |' -f $item.action_id, $item.label, $item.required, $item.covered, (($item.case_ids -join '、') -replace '^$', '无'), $item.risk)
   }
   $lines += ''
-  $lines += '## 4. 能力覆盖明细'
+  $lines += '## 5. 能力覆盖明细'
   $lines += '| 能力标签 | 是否覆盖 | 命中 Case |'
   $lines += '| --- | --- | --- |'
   foreach ($item in $Result.coverage.details) {
     $lines += ('| {0} | {1} | {2} |' -f $item.tag, $item.covered, (($item.case_ids -join '、') -replace '^$', '无'))
   }
   $lines += ''
-  $lines += '## 5. Case 生成情况'
+  $lines += '## 6. Case 生成情况'
   $lines += '| 模式 | 数量 |'
   $lines += '| --- | ---: |'
  $lines += ("| 自动生成 | {0} |" -f $Result.case_plan.generated_case_count)
  $lines += ("| 手工补充 | {0} |" -f $Result.case_plan.manual_case_count)
  $lines += ("| 合计 | {0} |" -f $Result.case_plan.effective_case_count)
  $lines += ''
- $lines += '## 6. Case 执行明细'
- $lines += '| Case ID | Action | Variant | HTTP | 判定 | 耗时(ms) |'
- $lines += '| --- | --- | --- | ---: | --- | ---: |'
- foreach ($run in ($Result.case_runs | Where-Object { $null -ne $_ })) {
-   $lines += ('| {0} | {1} | {2} | {3} | {4} | {5} |' -f $run.case_id, $run.action, $run.variant, $run.http_status, $run.judgement, $run.elapsed_ms)
- }
- $lines += ''
- if ($null -ne $Result.error_info) {
-   $lines += '## 7. 错误信息'
-   $lines += ("- 类型: {0}" -f $Result.error_info.type)
-   $lines += ("- 可读摘要: {0}" -f $Result.error_info.readable.user_message)
-   $lines += ("- 建议: {0}" -f $Result.error_info.readable.suggestion)
-   $lines += ''
- }
- $lines += '## 8. 附录'
+  $lines += '## 7. Case 执行明细'
+  $lines += '| Case ID | Action | Variant | HTTP | 判定 | 执行错误 | 耗时(ms) |'
+  $lines += '| --- | --- | --- | ---: | --- | --- | ---: |'
+  foreach ($run in ($Result.case_runs | Where-Object { $null -ne $_ })) {
+    $executionError = if ($null -ne $run.error_info) { [string](Get-NestedValue -Obj $run -Path 'error_info.type') } else { '无' }
+    $lines += ('| {0} | {1} | {2} | {3} | {4} | {5} | {6} |' -f $run.case_id, $run.action, $run.variant, $run.http_status, $run.judgement, $executionError, $run.elapsed_ms)
+  }
+  $lines += ''
+  $executionErrorRuns = @($Result.case_runs | Where-Object { $null -ne $_.error_info })
+  if ($executionErrorRuns.Count -gt 0) {
+    $lines += '## 8. 执行错误明细'
+    $lines += '| Case ID | 错误类型 | 可读摘要 | 建议 |'
+    $lines += '| --- | --- | --- | --- |'
+    foreach ($run in $executionErrorRuns) {
+      $errorType = [string](Get-NestedValue -Obj $run -Path 'error_info.type')
+      $errorReadable = [string](Get-NestedValue -Obj $run -Path 'error_info.readable.user_message')
+      $errorSuggestion = [string](Get-NestedValue -Obj $run -Path 'error_info.readable.suggestion')
+      $lines += ('| {0} | {1} | {2} | {3} |' -f $run.case_id, $errorType, $errorReadable, $errorSuggestion)
+    }
+    $lines += ''
+  }
+  if ($null -ne $Result.error_info) {
+    $lines += '## 9. 错误信息'
+    $lines += ("- 类型: {0}" -f $Result.error_info.type)
+    $lines += ("- 可读摘要: {0}" -f $Result.error_info.readable.user_message)
+    $lines += ("- 建议: {0}" -f $Result.error_info.readable.suggestion)
+    $lines += ''
+  }
+  $lines += '## 10. 附录'
  $lines += ("- cases.json: {0}" -f (Join-Path $Result.diagnostics.output_dir 'cases.json'))
  $lines += ("- real-conversation-replay.json: {0}" -f (Join-Path $Result.diagnostics.output_dir 'real-conversation-replay.json'))
  $lines += ("- coverage.summary.json: {0}" -f (Join-Path $Result.diagnostics.output_dir 'coverage.summary.json'))
@@ -1830,10 +1863,22 @@ function Invoke-CaseRun {
         $reader.Close()
         $parsed = Parse-ResponseText -Text $rawText
       } catch {
-        $errorInfo = $_.Exception.Message
+        $errorInfo = [ordered]@{
+          type = if ($status) { 'http_error' } else { 'network_or_unknown_error' }
+          detail = $_.Exception.Message
+          response_excerpt = Get-TruncatedText -Text $rawText -MaxLength 500
+          readable = Get-FriendlyErrorSummary -HttpStatus $status -RawText $rawText
+          execution_stage = 'response_read'
+        }
       }
     } else {
-      $errorInfo = $_.Exception.Message
+      $errorInfo = [ordered]@{
+        type = 'network_or_unknown_error'
+        detail = $_.Exception.Message
+        response_excerpt = Get-TruncatedText -Text $rawText -MaxLength 500
+        readable = Get-FriendlyErrorSummary -HttpStatus $status -RawText $rawText
+        execution_stage = 'transport'
+      }
     }
   }
 
@@ -1855,7 +1900,22 @@ function Invoke-CaseRun {
   if ($null -ne $status) {
     $statusValue = [int]$status
   }
-  $evaluation = Evaluate-CaseResult -Case $Case -HttpStatus $statusValue -RawText $rawText -Parsed $parsed -GatewayCode ([string]$gatewayCode) -Message ([string]$message) -ResultPayload $resultPayload -VersionMeta $versionMeta
+  if ($null -ne $errorInfo) {
+    $failureSummary = '执行阶段发生错误，未获得可判定响应。'
+    if ($null -ne $errorInfo.readable -and -not [string]::IsNullOrWhiteSpace([string]$errorInfo.readable.user_message)) {
+      $failureSummary = '{0} {1}' -f $failureSummary, [string]$errorInfo.readable.user_message
+    }
+    $evaluation = [ordered]@{
+      judgement = 'fail'
+      passed = $false
+      checks = @()
+      failures = @($failureSummary)
+      execution_error = $true
+      error_type = [string]$errorInfo.type
+    }
+  } else {
+    $evaluation = Evaluate-CaseResult -Case $Case -HttpStatus $statusValue -RawText $rawText -Parsed $parsed -GatewayCode ([string]$gatewayCode) -Message ([string]$message) -ResultPayload $resultPayload -VersionMeta $versionMeta
+  }
   $sw.Stop()
 
   return [ordered]@{
@@ -1900,8 +1960,18 @@ function Get-CaseRunSummary {
   $failCount = @($CaseRuns | Where-Object { $_.judgement -eq 'fail' }).Count
   $reviewCount = @($CaseRuns | Where-Object { $_.judgement -eq 'review_needed' }).Count
   $skippedCount = @($CaseRuns | Where-Object { $_.skipped }).Count
+  $executedRuns = @($CaseRuns | Where-Object { -not $_.skipped })
+  $executionErrorRuns = @($executedRuns | Where-Object { $null -ne $_.error_info })
+  $transportErrorRuns = @($executionErrorRuns | Where-Object {
+    $errorType = [string](Get-NestedValue -Obj $_ -Path 'error_info.type')
+    $errorType -in @('network_or_unknown_error', 'transport_error')
+  })
+  $httpErrorRuns = @($executionErrorRuns | Where-Object {
+    [string](Get-NestedValue -Obj $_ -Path 'error_info.type') -eq 'http_error'
+  })
+  $missingResponseRuns = @($executionErrorRuns | Where-Object { $null -eq $_.http_status })
 
-  $overall = if ($failCount -gt 0) {
+  $overall = if (($failCount -gt 0) -or ($executionErrorRuns.Count -gt 0)) {
     'Fail'
   } elseif ($reviewCount -gt 0) {
     'Partial'
@@ -1917,8 +1987,13 @@ function Get-CaseRunSummary {
     fail_count = $failCount
     review_needed_count = $reviewCount
     skipped_count = $skippedCount
-    executed_count = @($CaseRuns | Where-Object { -not $_.skipped }).Count
+    executed_count = $executedRuns.Count
     total_count = @($CaseRuns).Count
+    execution_error_count = $executionErrorRuns.Count
+    transport_error_count = $transportErrorRuns.Count
+    http_error_count = $httpErrorRuns.Count
+    missing_response_count = $missingResponseRuns.Count
+    execution_health = if ($executionErrorRuns.Count -gt 0) { 'Degraded' } else { 'Healthy' }
   }
 }
 
@@ -2070,6 +2145,14 @@ try {
   $sw.Stop()
 
   $caseRunSummary = Get-CaseRunSummary -CaseRuns $caseRuns
+  $executionSummary = [ordered]@{
+    execution_health = $caseRunSummary.execution_health
+    execution_error_count = $caseRunSummary.execution_error_count
+    transport_error_count = $caseRunSummary.transport_error_count
+    http_error_count = $caseRunSummary.http_error_count
+    missing_response_count = $caseRunSummary.missing_response_count
+    execution_error_case_ids = @($caseRuns | Where-Object { $null -ne $_.error_info } | ForEach-Object { $_.case_id })
+  }
   $sampleRun = @($caseRuns | Where-Object { -not $_.skipped } | Select-Object -First 1)
   $sampleRun = if ($sampleRun.Count -gt 0) { $sampleRun[0] } else { $null }
 
@@ -2100,6 +2183,11 @@ try {
       review_needed_count = $caseRunSummary.review_needed_count
       skipped_count = $caseRunSummary.skipped_count
       overall_judgement = $caseRunSummary.overall_judgement
+      execution_health = $caseRunSummary.execution_health
+      execution_error_count = $caseRunSummary.execution_error_count
+      transport_error_count = $caseRunSummary.transport_error_count
+      http_error_count = $caseRunSummary.http_error_count
+      missing_response_count = $caseRunSummary.missing_response_count
       http_status = if ($sampleRun) { $sampleRun.http_status } else { $null }
       gateway_code = if ($sampleRun) { $sampleRun.gateway_code } else { $null }
       message = if ($sampleRun) { $sampleRun.message } else { $null }
@@ -2128,6 +2216,7 @@ try {
     }
     coverage = $coverageSummary
     action_coverage = $actionSummary
+    execution_summary = $executionSummary
     case_plan = [ordered]@{
       manual_case_count = $manualCaseCount
       generated_case_count = $generatedCaseCount
