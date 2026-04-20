@@ -3,6 +3,6 @@
   "context": {
     "conversation_id": "demo",
     "locale": "zh-CN",
-    "source": "skill-test-runner"
+    "source": "skillscout"
   }
 }

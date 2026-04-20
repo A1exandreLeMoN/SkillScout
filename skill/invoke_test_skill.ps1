@@ -64,7 +64,7 @@ if ([string]::IsNullOrWhiteSpace($CaseMatrixFile)) {
   $CaseMatrixFile = Join-Path $PSScriptRoot 'test-case-matrix.template.json'
 }
 if ([string]::IsNullOrWhiteSpace($OutputDir)) {
-  $OutputDir = Join-Path ([System.IO.Path]::GetTempPath()) 'skill-test-runner-artifacts'
+  $OutputDir = Join-Path ([System.IO.Path]::GetTempPath()) 'skillscout-artifacts'
 }
 if ([string]::IsNullOrWhiteSpace($TargetRoot)) {
   $TargetRoot = Split-Path -Path $PSScriptRoot -Parent
@@ -1956,7 +1956,7 @@ try {
       }
       if (-not $PSBoundParameters.ContainsKey('OutputDir') -and -not [string]::IsNullOrWhiteSpace([string]$resolvedTarget.skill_directory)) {
         $skillName = [System.IO.Path]::GetFileName([string]$resolvedTarget.skill_directory)
-        $OutputDir = Join-Path ([System.IO.Path]::GetTempPath()) ("skill-test-runner-artifacts-{0}" -f $skillName)
+        $OutputDir = Join-Path ([System.IO.Path]::GetTempPath()) ("skillscout-artifacts-{0}" -f $skillName)
       }
       if (-not $PSBoundParameters.ContainsKey('SkillId') -and -not [string]::IsNullOrWhiteSpace([string]$resolvedTarget.skill_id)) {
         $SkillId = [string]$resolvedTarget.skill_id
