@@ -1,8 +1,0 @@
-{
-  "input": "请概述这个 skill 的核心能力，并给出一个最小可用示例。",
-  "context": {
-    "conversation_id": "demo",
-    "locale": "zh-CN",
-    "source": "skill-test-runner"
-  }
-}
