@@ -1,5 +1,5 @@
 ---
-name: SkillScout
+name: SkillLens
 description: 通用 Skill 测试执行器。采用 profile + 用例矩阵 + runner 的方式执行联调、核心能力、自然语言交互与风险测试，并输出中文结构化证据与报告。
 version: 3.1.0
 triggers:
@@ -169,9 +169,9 @@ Runner 只做执行层工作：
 - `ProfileFile`
 - `CaseMatrixFile`
 - `GatewayUrl`
-- `ApiKeyEnv`
-- `ApiKeyHeader`
-- `ApiKeyPrefix`
+- `AuthEnv`
+- `AuthHeader`
+- `AuthPrefix`
 - `SkillIdField`
 - `SkillVersionField`
 - `DisableFieldInjection`

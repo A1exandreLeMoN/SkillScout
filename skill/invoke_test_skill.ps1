@@ -18,13 +18,13 @@
   [string]$GatewayUrl,
 
   [Parameter(Mandatory = $false)]
-  [string]$ApiKeyEnv,
+  [string]$AuthEnv,
 
   [Parameter(Mandatory = $false)]
-  [string]$ApiKeyHeader,
+  [string]$AuthHeader,
 
   [Parameter(Mandatory = $false)]
-  [string]$ApiKeyPrefix,
+  [string]$AuthPrefix,
 
   [Parameter(Mandatory = $false)]
   [string]$SkillIdField,
@@ -64,7 +64,7 @@ if ([string]::IsNullOrWhiteSpace($CaseMatrixFile)) {
   $CaseMatrixFile = Join-Path $PSScriptRoot 'test-case-matrix.template.json'
 }
 if ([string]::IsNullOrWhiteSpace($OutputDir)) {
-  $OutputDir = Join-Path ([System.IO.Path]::GetTempPath()) 'skillscout-artifacts'
+  $OutputDir = Join-Path ([System.IO.Path]::GetTempPath()) 'skilllens-artifacts'
 }
 if ([string]::IsNullOrWhiteSpace($TargetRoot)) {
   $TargetRoot = Split-Path -Path $PSScriptRoot -Parent
@@ -1956,7 +1956,7 @@ try {
       }
       if (-not $PSBoundParameters.ContainsKey('OutputDir') -and -not [string]::IsNullOrWhiteSpace([string]$resolvedTarget.skill_directory)) {
         $skillName = [System.IO.Path]::GetFileName([string]$resolvedTarget.skill_directory)
-        $OutputDir = Join-Path ([System.IO.Path]::GetTempPath()) ("skillscout-artifacts-{0}" -f $skillName)
+        $OutputDir = Join-Path ([System.IO.Path]::GetTempPath()) ("skilllens-artifacts-{0}" -f $skillName)
       }
       if (-not $PSBoundParameters.ContainsKey('SkillId') -and -not [string]::IsNullOrWhiteSpace([string]$resolvedTarget.skill_id)) {
         $SkillId = [string]$resolvedTarget.skill_id
@@ -2004,9 +2004,9 @@ try {
     exit 1
   }
 
-  $resolvedApiKeyEnv = Resolve-Value -Primary $ApiKeyEnv -Secondary (Get-NestedValue -Obj $profile -Path 'transport.auth_env') -Fallback 'API_KEY'
-  $resolvedApiKeyHeader = Resolve-Value -Primary $ApiKeyHeader -Secondary (Get-NestedValue -Obj $profile -Path 'transport.auth_header') -Fallback 'Authorization'
-  $resolvedApiKeyPrefix = Resolve-Value -Primary $ApiKeyPrefix -Secondary (Get-NestedValue -Obj $profile -Path 'transport.auth_prefix') -Fallback 'Bearer '
+  $resolvedAuthEnv = Resolve-Value -Primary $AuthEnv -Secondary (Get-NestedValue -Obj $profile -Path 'transport.auth_env') -Fallback 'AUTH_TOKEN'
+  $resolvedAuthHeader = Resolve-Value -Primary $AuthHeader -Secondary (Get-NestedValue -Obj $profile -Path 'transport.auth_header') -Fallback 'X-Auth-Token'
+  $resolvedAuthPrefix = Resolve-Value -Primary $AuthPrefix -Secondary (Get-NestedValue -Obj $profile -Path 'transport.auth_prefix') -Fallback ''
   $resolvedSkillIdField = Resolve-Value -Primary $SkillIdField -Secondary (Get-NestedValue -Obj $profile -Path 'fields.skill_id') -Fallback 'skill_id'
   $resolvedSkillVersionField = Resolve-Value -Primary $SkillVersionField -Secondary (Get-NestedValue -Obj $profile -Path 'fields.skill_version') -Fallback '_skill_version'
   $resolvedSensitiveMode = Resolve-Value -Primary $SensitiveMode -Secondary (Get-NestedValue -Obj $profile -Path 'risk.default_mode') -Fallback 'ask'
@@ -2025,9 +2025,9 @@ try {
     try { $timeoutSec = [int]$profileTimeout } catch {}
   }
 
-  $apiKey = [Environment]::GetEnvironmentVariable($resolvedApiKeyEnv)
-  if ([string]::IsNullOrWhiteSpace($apiKey)) {
-    Write-Host ("当前未检测到本地环境变量 {0}，请先配置后再继续使用。" -f $resolvedApiKeyEnv)
+  $authToken = [Environment]::GetEnvironmentVariable($resolvedAuthEnv)
+  if ([string]::IsNullOrWhiteSpace($authToken)) {
+    Write-Host ("当前未检测到本地环境变量 {0}，请先配置后再继续使用。" -f $resolvedAuthEnv)
     exit 1
   }
 
@@ -2053,7 +2053,7 @@ try {
   $headers = @{
     'Content-Type' = 'application/json'
   }
-  $headers[$resolvedApiKeyHeader] = ("{0}{1}" -f $resolvedApiKeyPrefix, $apiKey)
+  $headers[$resolvedAuthHeader] = ("{0}{1}" -f $resolvedAuthPrefix, $authToken)
 
   $sw = [Diagnostics.Stopwatch]::StartNew()
   $effectiveCases = Get-EffectiveCaseArray -Profile $profile -Matrix $caseMatrix
@@ -2087,8 +2087,8 @@ try {
       action_schema_recommended_fields = @(Get-StringArray (Get-NestedValue -Obj $profile -Path 'action_schema.recommended_fields'))
       action_schema_variant_names = @(Get-StringArray (Get-NestedValue -Obj $profile -Path 'action_schema.variant_names'))
       elapsed_ms = [int]$sw.ElapsedMilliseconds
-      auth_env = $resolvedApiKeyEnv
-      auth_header = $resolvedApiKeyHeader
+      auth_env = $resolvedAuthEnv
+      auth_header = $resolvedAuthHeader
       profile_file = if ($ProfileFile) { $ProfileFile } else { $null }
       case_matrix_file = if ($CaseMatrixFile) { $CaseMatrixFile } else { $null }
       case_count = $caseCount
@@ -2168,9 +2168,9 @@ if ([string]::IsNullOrWhiteSpace([string]$resolvedGatewayUrl)) {
   exit 1
 }
 
-$resolvedApiKeyEnv = Resolve-Value -Primary $ApiKeyEnv -Secondary (Get-NestedValue -Obj $profile -Path 'transport.auth_env') -Fallback 'API_KEY'
-$resolvedApiKeyHeader = Resolve-Value -Primary $ApiKeyHeader -Secondary (Get-NestedValue -Obj $profile -Path 'transport.auth_header') -Fallback 'Authorization'
-$resolvedApiKeyPrefix = Resolve-Value -Primary $ApiKeyPrefix -Secondary (Get-NestedValue -Obj $profile -Path 'transport.auth_prefix') -Fallback 'Bearer '
+$resolvedAuthEnv = Resolve-Value -Primary $AuthEnv -Secondary (Get-NestedValue -Obj $profile -Path 'transport.auth_env') -Fallback 'AUTH_TOKEN'
+$resolvedAuthHeader = Resolve-Value -Primary $AuthHeader -Secondary (Get-NestedValue -Obj $profile -Path 'transport.auth_header') -Fallback 'X-Auth-Token'
+$resolvedAuthPrefix = Resolve-Value -Primary $AuthPrefix -Secondary (Get-NestedValue -Obj $profile -Path 'transport.auth_prefix') -Fallback ''
 $resolvedSkillIdField = Resolve-Value -Primary $SkillIdField -Secondary (Get-NestedValue -Obj $profile -Path 'fields.skill_id') -Fallback 'skill_id'
 $resolvedSkillVersionField = Resolve-Value -Primary $SkillVersionField -Secondary (Get-NestedValue -Obj $profile -Path 'fields.skill_version') -Fallback '_skill_version'
 $resolvedSensitiveMode = Resolve-Value -Primary $SensitiveMode -Secondary (Get-NestedValue -Obj $profile -Path 'risk.default_mode') -Fallback 'ask'
@@ -2189,11 +2189,11 @@ if ($null -ne $profileTimeout) {
   try { $timeoutSec = [int]$profileTimeout } catch {}
 }
 
-$apiKey = [Environment]::GetEnvironmentVariable($resolvedApiKeyEnv)
-if ([string]::IsNullOrWhiteSpace($apiKey)) {
-  Write-Host ("当前未检测到本地环境变量 {0}，请先配置后再继续使用。" -f $resolvedApiKeyEnv)
-  exit 1
-}
+  $authToken = [Environment]::GetEnvironmentVariable($resolvedAuthEnv)
+  if ([string]::IsNullOrWhiteSpace($authToken)) {
+    Write-Host ("当前未检测到本地环境变量 {0}，请先配置后再继续使用。" -f $resolvedAuthEnv)
+    exit 1
+  }
 
 if (-not (Test-Path -LiteralPath $PayloadFile)) {
   Write-Host ("未找到请求文件: {0}" -f $PayloadFile)
@@ -2243,7 +2243,7 @@ if ($isSensitive) {
 $headers = @{
   'Content-Type' = 'application/json'
 }
-$headers[$resolvedApiKeyHeader] = ("{0}{1}" -f $resolvedApiKeyPrefix, $apiKey)
+  $headers[$resolvedAuthHeader] = ("{0}{1}" -f $resolvedAuthPrefix, $authToken)
 
 $body = $payloadObj | ConvertTo-Json -Depth 100
 $sw = [Diagnostics.Stopwatch]::StartNew()
@@ -2284,8 +2284,8 @@ try {
       elapsed_ms = [int]$sw.ElapsedMilliseconds
       gateway_code = $gatewayCode
       message = $message
-      auth_env = $resolvedApiKeyEnv
-      auth_header = $resolvedApiKeyHeader
+      auth_env = $resolvedAuthEnv
+      auth_header = $resolvedAuthHeader
       profile_file = if ($ProfileFile) { $ProfileFile } else { $null }
       case_matrix_file = if ($CaseMatrixFile) { $CaseMatrixFile } else { $null }
       case_count = $caseCount
@@ -2367,8 +2367,8 @@ try {
       elapsed_ms = [int]$sw.ElapsedMilliseconds
       gateway_code = if ($parsed) { Resolve-From-Paths -Obj $parsed -Paths $gatewayCodePaths } else { $null }
       message = if ($parsed) { Resolve-From-Paths -Obj $parsed -Paths $messagePaths } else { $null }
-      auth_env = $resolvedApiKeyEnv
-      auth_header = $resolvedApiKeyHeader
+      auth_env = $resolvedAuthEnv
+      auth_header = $resolvedAuthHeader
       profile_file = if ($ProfileFile) { $ProfileFile } else { $null }
       case_matrix_file = if ($CaseMatrixFile) { $CaseMatrixFile } else { $null }
       case_count = $caseCount

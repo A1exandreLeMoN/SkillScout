@@ -1,4 +1,4 @@
-# SkillScout
+# SkillLens
 
 一个面向任意 Skill 的通用自动化测评框架。  
 当前实现以 `http_json` 适配器为默认执行模式，适合测试通过 HTTP 网关提供能力、并以 JSON 交换请求/响应的 Skill。
@@ -64,7 +64,7 @@
   -ProfileFile ".\skill\skill-profile.template.json" `
   -CaseMatrixFile ".\skill\test-case-matrix.template.json" `
   -GatewayUrl "http://127.0.0.1:8080/run" `
-  -ApiKeyEnv "API_KEY" `
+  -AuthEnv "AUTH_TOKEN" `
   -SensitiveMode "always_allow"
 ```
 
@@ -77,7 +77,7 @@
   -SensitiveMode "always_allow"
 ```
 
-默认情况下，产物会写到当前用户临时目录下的 `skillscout-artifacts*`，不会落到 `skill/` 目录；如需自定义，可传 `-OutputDir`。
+默认情况下，产物会写到当前用户临时目录下的 `skilllens-artifacts*`，不会落到 `skill/` 目录；如需自定义，可传 `-OutputDir`。
 
 这时 runner 会尝试在工作区里自动发现最匹配的 skill 目录、profile 和 payload。
 

@@ -562,9 +562,9 @@
   ],
   "transport": {
     "gateway_url": "<GATEWAY_URL>",
-    "auth_env": "API_KEY",
-    "auth_header": "Authorization",
-    "auth_prefix": "Bearer ",
+    "auth_env": "AUTH_TOKEN",
+    "auth_header": "X-Auth-Token",
+    "auth_prefix": "",
     "timeout_sec": 60
   },
   "fields": {
