@@ -1,5 +1,5 @@
 ﻿param(
-  [Parameter(Mandatory = $true)]
+  [Parameter(Mandatory = $false)]
   [string]$SkillId,
 
   [Parameter(Mandatory = $false)]
@@ -39,6 +39,14 @@
   [Parameter(Mandatory = $false)]
   [string]$OutputDir,
 
+  [Parameter(Mandatory = $false)]
+  [string]$TargetQuery,
+
+  [Parameter(Mandatory = $false)]
+  [string]$TargetRoot,
+
+  [switch]$DiscoverTargetSkill,
+
   [switch]$DisableFieldInjection,
   [switch]$Pretty
 )
@@ -56,7 +64,10 @@ if ([string]::IsNullOrWhiteSpace($CaseMatrixFile)) {
   $CaseMatrixFile = Join-Path $PSScriptRoot 'test-case-matrix.template.json'
 }
 if ([string]::IsNullOrWhiteSpace($OutputDir)) {
-  $OutputDir = Join-Path $PSScriptRoot 'artifacts'
+  $OutputDir = Join-Path ([System.IO.Path]::GetTempPath()) 'skill-test-runner-artifacts'
+}
+if ([string]::IsNullOrWhiteSpace($TargetRoot)) {
+  $TargetRoot = Split-Path -Path $PSScriptRoot -Parent
 }
 
 function Set-OrAddProperty {
@@ -99,6 +110,171 @@ function Read-JsonFile {
     }
     throw ("JSON 文件解析失败: {0} | {1}" -f $Path, $detail)
   }
+}
+
+function Normalize-SearchText {
+  param([string]$Text)
+  if ([string]::IsNullOrWhiteSpace($Text)) { return '' }
+  $normalized = $Text.ToLowerInvariant()
+  $normalized = $normalized -replace '[^\p{L}\p{N}]+', ' '
+  return (($normalized -replace '\s+', ' ').Trim())
+}
+
+function Get-SkillMarkdownFrontMatter {
+  param([Parameter(Mandatory = $true)][string]$Path)
+  if (-not (Test-Path -LiteralPath $Path)) { return [ordered]@{} }
+  try {
+    $content = Get-Content -LiteralPath $Path -Raw -Encoding UTF8
+  } catch {
+    return [ordered]@{}
+  }
+
+  if ($content -notmatch '(?s)^---\s*(.*?)\s*---') {
+    return [ordered]@{}
+  }
+
+  $meta = [ordered]@{}
+  foreach ($line in ($Matches[1] -split "`r?`n")) {
+    if ($line -match '^\s*([A-Za-z0-9_.-]+)\s*:\s*(.*?)\s*$') {
+      $key = $matches[1]
+      $value = $matches[2].Trim()
+      if (($value.StartsWith('"') -and $value.EndsWith('"')) -or ($value.StartsWith("'") -and $value.EndsWith("'"))) {
+        if ($value.Length -ge 2) {
+          $value = $value.Substring(1, $value.Length - 2)
+        }
+      }
+      $meta[$key] = $value
+    }
+  }
+  return $meta
+}
+
+function Get-TextMatchScore {
+  param(
+    [string]$Query,
+    [string]$Candidate
+  )
+  $q = Normalize-SearchText -Text $Query
+  $c = Normalize-SearchText -Text $Candidate
+  if ([string]::IsNullOrWhiteSpace($q) -or [string]::IsNullOrWhiteSpace($c)) {
+    return 0
+  }
+
+  $score = 0
+  if ($c.Contains($q)) { $score += 100 }
+  if ($q.Contains($c)) { $score += 40 }
+  foreach ($term in ($q -split ' ')) {
+    if ([string]::IsNullOrWhiteSpace($term)) { continue }
+    if ($term.Length -lt 2) { continue }
+    if ($c.Contains($term)) { $score += 10 }
+  }
+  return $score
+}
+
+function Resolve-SkillTarget {
+  param(
+    [string]$TargetQuery,
+    [string]$WorkspaceRoot,
+    [string]$CurrentSkillRoot
+  )
+
+  if ([string]::IsNullOrWhiteSpace($WorkspaceRoot) -or -not (Test-Path -LiteralPath $WorkspaceRoot)) {
+    return $null
+  }
+
+  $skillDocs = Get-ChildItem -LiteralPath $WorkspaceRoot -Recurse -File -Filter 'SKILL.md' -ErrorAction SilentlyContinue
+  if ($null -eq $skillDocs -or $skillDocs.Count -eq 0) {
+    return $null
+  }
+
+  $candidates = @()
+  foreach ($doc in $skillDocs) {
+    $skillDir = Split-Path -Path $doc.FullName -Parent
+    $profileCandidates = @(
+      (Join-Path $skillDir 'skill-profile.json'),
+      (Join-Path $skillDir 'skill-profile.template.json'),
+      (Join-Path $skillDir 'profile.json')
+    )
+    $profileFile = $profileCandidates | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
+    if ([string]::IsNullOrWhiteSpace([string]$profileFile)) {
+      continue
+    }
+
+    $frontMatter = Get-SkillMarkdownFrontMatter -Path $doc.FullName
+    $profileObj = $null
+    try {
+      $profileObj = Read-JsonFile -Path $profileFile
+    } catch {
+      $profileObj = $null
+    }
+
+    $skillId = $null
+    if ($null -ne $profileObj) {
+      $skillId = [string](Get-NestedValue -Obj $profileObj -Path 'skill_id')
+    }
+
+    $skillVersion = $null
+    if ($null -ne $profileObj) {
+      $skillVersion = [string](Get-NestedValue -Obj $profileObj -Path 'skill_version')
+    }
+
+    $skillName = [IO.Path]::GetFileName($skillDir)
+    if ($frontMatter.Contains('name')) {
+      $skillName = [string]$frontMatter['name']
+    }
+
+    $description = ''
+    if ($frontMatter.Contains('description')) {
+      $description = [string]$frontMatter['description']
+    }
+
+    $candidateText = @([IO.Path]::GetFileName($skillDir), $skillName, $description, $skillId, $skillVersion) -join ' '
+    $score = Get-TextMatchScore -Query $TargetQuery -Candidate $candidateText
+    if ($skillDir -eq $CurrentSkillRoot) {
+      $score += 50
+    }
+
+    $payloadCandidate = Join-Path $skillDir 'payload.sample.json'
+    $caseMatrixCandidate = Join-Path $skillDir 'test-case-matrix.template.json'
+    $payloadFile = $null
+    if (Test-Path -LiteralPath $payloadCandidate) {
+      $payloadFile = $payloadCandidate
+    }
+
+    $caseMatrixFile = $null
+    if (Test-Path -LiteralPath $caseMatrixCandidate) {
+      $caseMatrixFile = $caseMatrixCandidate
+    }
+
+    $adapterKind = $null
+    if ($null -ne $profileObj) {
+      $adapterKind = [string](Get-NestedValue -Obj $profileObj -Path 'adapter.kind')
+    }
+
+    $candidates += [ordered]@{
+      skill_directory = $skillDir
+      skill_markdown = $doc.FullName
+      profile_file = $profileFile
+      payload_file = $payloadFile
+      case_matrix_file = $caseMatrixFile
+      skill_id = $skillId
+      skill_version = $skillVersion
+      skill_name = $skillName
+      description = $description
+      adapter_kind = $adapterKind
+      score = $score
+    }
+  }
+
+  if ($candidates.Count -eq 0) {
+    return $null
+  }
+
+  return @(
+    $candidates |
+      Sort-Object @{Expression = 'score'; Descending = $true}, @{Expression = 'skill_directory'; Descending = $false} |
+      Select-Object -First 1
+  )
 }
 
 function Validate-ProfileSchema {
@@ -1748,9 +1924,73 @@ function Get-CaseRunSummary {
 
 # 新批量执行路径：按 case 自动执行、评估并输出汇总结果。
 try {
+  $resolvedTarget = $null
+  $resolvedTargetInfo = $null
+  if (-not [string]::IsNullOrWhiteSpace($TargetQuery) -or $DiscoverTargetSkill) {
+    $resolvedTarget = Resolve-SkillTarget -TargetQuery $TargetQuery -WorkspaceRoot $TargetRoot -CurrentSkillRoot $PSScriptRoot
+    if ($null -ne $resolvedTarget) {
+      $resolvedTargetInfo = [ordered]@{
+        discovered = $true
+        query = $TargetQuery
+        workspace_root = $TargetRoot
+        skill_directory = [string]$resolvedTarget.skill_directory
+        skill_markdown = [string]$resolvedTarget.skill_markdown
+        profile_file = [string]$resolvedTarget.profile_file
+        payload_file = [string]$resolvedTarget.payload_file
+        case_matrix_file = [string]$resolvedTarget.case_matrix_file
+        skill_id = [string]$resolvedTarget.skill_id
+        skill_version = [string]$resolvedTarget.skill_version
+        skill_name = [string]$resolvedTarget.skill_name
+        adapter_kind = [string]$resolvedTarget.adapter_kind
+        score = [int]$resolvedTarget.score
+      }
+
+      if (-not $PSBoundParameters.ContainsKey('ProfileFile') -and -not [string]::IsNullOrWhiteSpace([string]$resolvedTarget.profile_file)) {
+        $ProfileFile = [string]$resolvedTarget.profile_file
+      }
+      if (-not $PSBoundParameters.ContainsKey('PayloadFile') -and -not [string]::IsNullOrWhiteSpace([string]$resolvedTarget.payload_file)) {
+        $PayloadFile = [string]$resolvedTarget.payload_file
+      }
+      if (-not $PSBoundParameters.ContainsKey('CaseMatrixFile') -and -not [string]::IsNullOrWhiteSpace([string]$resolvedTarget.case_matrix_file)) {
+        $CaseMatrixFile = [string]$resolvedTarget.case_matrix_file
+      }
+      if (-not $PSBoundParameters.ContainsKey('OutputDir') -and -not [string]::IsNullOrWhiteSpace([string]$resolvedTarget.skill_directory)) {
+        $skillName = [System.IO.Path]::GetFileName([string]$resolvedTarget.skill_directory)
+        $OutputDir = Join-Path ([System.IO.Path]::GetTempPath()) ("skill-test-runner-artifacts-{0}" -f $skillName)
+      }
+      if (-not $PSBoundParameters.ContainsKey('SkillId') -and -not [string]::IsNullOrWhiteSpace([string]$resolvedTarget.skill_id)) {
+        $SkillId = [string]$resolvedTarget.skill_id
+      }
+      if (-not $PSBoundParameters.ContainsKey('SkillVersion') -and -not [string]::IsNullOrWhiteSpace([string]$resolvedTarget.skill_version)) {
+        $SkillVersion = [string]$resolvedTarget.skill_version
+      }
+    } elseif (-not [string]::IsNullOrWhiteSpace($TargetQuery) -or $DiscoverTargetSkill) {
+      $targetQueryLabel = $TargetQuery
+      if ([string]::IsNullOrWhiteSpace($targetQueryLabel)) {
+        $targetQueryLabel = '<空>'
+      }
+      Write-Host ("未能根据目标描述解析到 skill: {0}" -f $targetQueryLabel)
+      exit 1
+    }
+  }
+
   $profile = $null
   if (-not [string]::IsNullOrWhiteSpace($ProfileFile) -and (Test-Path -LiteralPath $ProfileFile)) {
     $profile = Read-JsonFile -Path $ProfileFile
+  }
+
+  if ([string]::IsNullOrWhiteSpace($SkillId) -and $null -ne $profile) {
+    $SkillId = [string](Get-NestedValue -Obj $profile -Path 'skill_id')
+  }
+  if ([string]::IsNullOrWhiteSpace($SkillVersion)) {
+    $profileSkillVersion = if ($null -ne $profile) { [string](Get-NestedValue -Obj $profile -Path 'skill_version') } else { $null }
+    if (-not [string]::IsNullOrWhiteSpace($profileSkillVersion)) {
+      $SkillVersion = $profileSkillVersion
+    }
+  }
+  if ([string]::IsNullOrWhiteSpace($SkillId)) {
+    Write-Host '缺少 SkillId。请显式传入，或通过 TargetQuery / profile 自动解析目标 skill。'
+    exit 1
   }
 
   $caseMatrix = $null
@@ -1837,6 +2077,7 @@ try {
     diagnostics = [ordered]@{
       gateway_url = $resolvedGatewayUrl
       output_dir = $OutputDir
+      target_resolution = $resolvedTargetInfo
       adapter_kind = Get-AdapterKind -Profile $profile
       adapter_name = Get-AdapterName -Profile $profile
       adapter_supported_skill_shapes = @(Get-AdapterSupportedSkillShapes -Profile $profile)
@@ -2038,6 +2279,7 @@ try {
     diagnostics = [ordered]@{
       gateway_url = $resolvedGatewayUrl
       output_dir = $OutputDir
+      target_resolution = $resolvedTargetInfo
       http_status = $httpStatus
       elapsed_ms = [int]$sw.ElapsedMilliseconds
       gateway_code = $gatewayCode

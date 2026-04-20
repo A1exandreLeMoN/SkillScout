@@ -25,6 +25,7 @@ triggers:
 - 优先读取 profile.actions / capabilities 自动生成基础用例
 - 如果提供了手工矩阵，则自动补齐缺失的 action / 能力覆盖
 - 最终以自动生成 + 手工补充的有效用例集进行执行与判定
+- 如果传入 `TargetQuery`，可在工作区中自动发现最匹配的 skill 目录与 profile
 
 核心原则：
 - 中文输出
@@ -176,15 +177,21 @@ Runner 只做执行层工作：
 - `DisableFieldInjection`
 - `SensitiveMode`
 - `Pretty`
+- `TargetQuery`
+- `TargetRoot`
+- `DiscoverTargetSkill`
+
+传入 `TargetQuery` 时，框架会先扫描工作区，自动发现最匹配的 skill，并回填 profile / payload / matrix / 输出目录。
 
 ## 6. 运行原则
 1. 优先读 profile，再读命令行参数，再用框架默认值。
-2. 缺少网关地址或认证信息时，明确报错并停止。
-3. 写操作默认走确认流程，不要默认放行。
-4. 响应结构不假设固定字段，通过 response_mapping 解析。
-5. 非 2xx 也要输出结构化 error_info。
-6. 报告里要区分：业务问题、配置问题、runner 问题。
-7. 最终是否完整，不看条数，只看 profile 声明的能力是否被覆盖。
+2. 如果提供了 `TargetQuery`，先尝试自动发现对应 skill，再回填 profile / payload / matrix。
+3. 缺少网关地址或认证信息时，明确报错并停止。
+4. 写操作默认走确认流程，不要默认放行。
+5. 响应结构不假设固定字段，通过 response_mapping 解析。
+6. 非 2xx 也要输出结构化 error_info。
+7. 报告里要区分：业务问题、配置问题、runner 问题。
+8. 最终是否完整，不看条数，只看 profile 声明的能力是否被覆盖。
 
 ## 7. 输出产物
 至少输出以下结果：

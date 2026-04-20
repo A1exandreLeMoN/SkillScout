@@ -68,6 +68,19 @@
   -SensitiveMode "always_allow"
 ```
 
+如果你想用自然语言让框架自动找目标 skill，也可以传：
+
+```powershell
+.\skill\invoke_test_skill.ps1 `
+  -TargetQuery "测试一下这个 skill" `
+  -TargetRoot "." `
+  -SensitiveMode "always_allow"
+```
+
+默认情况下，产物会写到当前用户临时目录下的 `skill-test-runner-artifacts*`，不会落到 `skill/` 目录；如需自定义，可传 `-OutputDir`。
+
+这时 runner 会尝试在工作区里自动发现最匹配的 skill 目录、profile 和 payload。
+
 ## 输出内容
 
 运行后会生成一组中文可读、机器可消费的产物，例如：
