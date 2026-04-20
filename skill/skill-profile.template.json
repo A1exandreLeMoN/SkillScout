@@ -1,0 +1,701 @@
+{
+  "schema_version": "1.0",
+  "profile_kind": "generic_skill",
+  "skill_id": "<SKILL_ID>",
+  "skill_version": "<VERSION>",
+  "adapter": {
+    "kind": "http_json",
+    "name": "HTTP JSON ?????",
+    "description": "? HTTP + JSON ???? skill ???????? runner ????????",
+    "supported_skill_shapes": [
+      "api",
+      "dialogue",
+      "workflow",
+      "tool"
+    ],
+    "request_mapping": {
+      "prompt_paths": [
+        "prompt",
+        "question",
+        "input",
+        "query",
+        "content",
+        "text"
+      ],
+      "action_paths": [
+        "action",
+        "operation",
+        "intent",
+        "mode",
+        "type",
+        "risk"
+      ],
+      "context_paths": [
+        "context",
+        "history",
+        "conversation"
+      ],
+      "case_id_paths": [
+        "meta.case_id",
+        "metadata.case_id"
+      ],
+      "variant_paths": [
+        "meta.variant",
+        "metadata.variant"
+      ],
+      "coverage_paths": [
+        "meta.coverage_tags",
+        "metadata.coverage_tags"
+      ],
+      "metadata_path": "meta"
+    },
+    "response_mapping": {
+      "gateway_code_paths": [
+        "code",
+        "data.code",
+        "result.code",
+        "status.code"
+      ],
+      "message_paths": [
+        "message",
+        "data.message",
+        "result.message",
+        "status.message"
+      ],
+      "result_paths": [
+        "data.result",
+        "data.output",
+        "data.answer",
+        "data.content",
+        "result",
+        "output",
+        "answer",
+        "content",
+        "payload"
+      ],
+      "version_paths": [
+        "data.version_info",
+        "version_info",
+        "meta.version"
+      ]
+    }
+  },
+  "capabilities": [
+    "鉴权接入",
+    "核心流程",
+    "自然语言交互",
+    "边界与错误",
+    "多轮上下文",
+    "副作用确认"
+  ],
+  "coverage_policy": {
+    "require_all_capabilities": true,
+    "require_all_actions": true,
+    "required_tags": [
+      "鉴权接入",
+      "核心流程",
+      "自然语言交互",
+      "边界与错误"
+    ],
+    "optional_tags": [
+      "多轮上下文",
+      "副作用确认"
+    ]
+  },
+  "actions": [
+    {
+      "action_id": "auth_missing",
+      "label": "缺少认证信息",
+      "required": true,
+      "risk": "low",
+      "coverage_tags": [
+        "鉴权接入",
+        "边界与错误"
+      ],
+      "assertions": [
+        "应返回可读的鉴权失败信息"
+      ],
+      "expected_http_status_in": [
+        401,
+        403
+      ],
+      "response_contains": [
+        "认证",
+        "鉴权",
+        "token",
+        "Authorization"
+      ],
+      "response_not_contains": [
+        "成功",
+        "已完成"
+      ],
+      "preconditions": [],
+      "negative_assertions": [],
+      "expected_gateway_code_in": [],
+      "variants": {},
+      "input_hints": []
+    },
+    {
+      "action_id": "auth_invalid",
+      "label": "错误认证信息",
+      "required": true,
+      "risk": "low",
+      "coverage_tags": [
+        "鉴权接入",
+        "边界与错误"
+      ],
+      "assertions": [
+        "应返回可读的鉴权失败信息"
+      ],
+      "expected_http_status_in": [
+        401,
+        403
+      ],
+      "response_contains": [
+        "认证",
+        "鉴权",
+        "token",
+        "Authorization"
+      ],
+      "response_not_contains": [
+        "成功",
+        "已完成"
+      ],
+      "preconditions": [],
+      "negative_assertions": [],
+      "expected_gateway_code_in": [],
+      "variants": {},
+      "input_hints": []
+    },
+    {
+      "action_id": "auth_success",
+      "label": "最小可用接入",
+      "required": true,
+      "risk": "low",
+      "coverage_tags": [
+        "鉴权接入",
+        "核心流程"
+      ],
+      "assertions": [
+        "应通过鉴权并继续执行"
+      ],
+      "expected_http_status_in": [
+        200,
+        201,
+        202
+      ],
+      "preconditions": [],
+      "negative_assertions": [],
+      "expected_gateway_code_in": [],
+      "variants": {},
+      "input_hints": [],
+      "response_contains": [],
+      "response_not_contains": []
+    },
+    {
+      "action_id": "core_main_1",
+      "label": "核心主流程 1",
+      "required": true,
+      "risk": "medium",
+      "coverage_tags": [
+        "核心流程"
+      ],
+      "preconditions": [],
+      "negative_assertions": [],
+      "expected_gateway_code_in": [],
+      "variants": {},
+      "input_hints": [],
+      "assertions": [],
+      "response_contains": [],
+      "response_not_contains": []
+    },
+    {
+      "action_id": "core_main_2",
+      "label": "核心主流程 2",
+      "required": true,
+      "risk": "medium",
+      "coverage_tags": [
+        "核心流程"
+      ],
+      "preconditions": [],
+      "negative_assertions": [],
+      "expected_gateway_code_in": [],
+      "variants": {},
+      "input_hints": [],
+      "assertions": [],
+      "response_contains": [],
+      "response_not_contains": []
+    },
+    {
+      "action_id": "core_main_3",
+      "label": "核心主流程 3",
+      "required": true,
+      "risk": "medium",
+      "coverage_tags": [
+        "核心流程"
+      ],
+      "preconditions": [],
+      "negative_assertions": [],
+      "expected_gateway_code_in": [],
+      "variants": {},
+      "input_hints": [],
+      "assertions": [],
+      "response_contains": [],
+      "response_not_contains": []
+    },
+    {
+      "action_id": "nl_overview",
+      "label": "概览/列表式回答",
+      "required": true,
+      "risk": "low",
+      "coverage_tags": [
+        "自然语言交互"
+      ],
+      "preconditions": [],
+      "negative_assertions": [],
+      "expected_gateway_code_in": [],
+      "variants": {},
+      "input_hints": [],
+      "assertions": [],
+      "response_contains": [],
+      "response_not_contains": []
+    },
+    {
+      "action_id": "nl_detail",
+      "label": "详情查询式回答",
+      "required": true,
+      "risk": "low",
+      "coverage_tags": [
+        "自然语言交互"
+      ],
+      "preconditions": [],
+      "negative_assertions": [],
+      "expected_gateway_code_in": [],
+      "variants": {},
+      "input_hints": [],
+      "assertions": [],
+      "response_contains": [],
+      "response_not_contains": []
+    },
+    {
+      "action_id": "nl_filter",
+      "label": "筛选/分组/排序",
+      "required": true,
+      "risk": "low",
+      "coverage_tags": [
+        "自然语言交互"
+      ],
+      "preconditions": [],
+      "negative_assertions": [],
+      "expected_gateway_code_in": [],
+      "variants": {},
+      "input_hints": [],
+      "assertions": [],
+      "response_contains": [],
+      "response_not_contains": []
+    },
+    {
+      "action_id": "nl_time",
+      "label": "时间维度问题",
+      "required": true,
+      "risk": "low",
+      "coverage_tags": [
+        "自然语言交互"
+      ],
+      "preconditions": [],
+      "negative_assertions": [],
+      "expected_gateway_code_in": [],
+      "variants": {},
+      "input_hints": [],
+      "assertions": [],
+      "response_contains": [],
+      "response_not_contains": []
+    },
+    {
+      "action_id": "nl_target",
+      "label": "指定对象检索",
+      "required": true,
+      "risk": "low",
+      "coverage_tags": [
+        "自然语言交互"
+      ],
+      "preconditions": [],
+      "negative_assertions": [],
+      "expected_gateway_code_in": [],
+      "variants": {},
+      "input_hints": [],
+      "assertions": [],
+      "response_contains": [],
+      "response_not_contains": []
+    },
+    {
+      "action_id": "nl_explain",
+      "label": "解释型回答",
+      "required": true,
+      "risk": "low",
+      "coverage_tags": [
+        "自然语言交互"
+      ],
+      "preconditions": [],
+      "negative_assertions": [],
+      "expected_gateway_code_in": [],
+      "variants": {},
+      "input_hints": [],
+      "assertions": [],
+      "response_contains": [],
+      "response_not_contains": []
+    },
+    {
+      "action_id": "nl_retry",
+      "label": "失败后重试",
+      "required": true,
+      "risk": "low",
+      "coverage_tags": [
+        "自然语言交互",
+        "边界与错误"
+      ],
+      "preconditions": [],
+      "negative_assertions": [],
+      "expected_gateway_code_in": [],
+      "variants": {},
+      "input_hints": [],
+      "assertions": [],
+      "response_contains": [],
+      "response_not_contains": []
+    },
+    {
+      "action_id": "nl_context",
+      "label": "多轮上下文延续",
+      "required": false,
+      "risk": "low",
+      "coverage_tags": [
+        "自然语言交互",
+        "多轮上下文"
+      ],
+      "assertions": [
+        "应保持上下文一致并正确衔接追问"
+      ],
+      "expected_http_status_in": [
+        200,
+        201,
+        202
+      ],
+      "response_contains": [
+        "上下文",
+        "追问",
+        "继续"
+      ],
+      "preconditions": [],
+      "negative_assertions": [],
+      "expected_gateway_code_in": [],
+      "variants": {},
+      "input_hints": [],
+      "response_not_contains": []
+    },
+    {
+      "action_id": "version_missing",
+      "label": "缺少版本字段",
+      "required": true,
+      "risk": "medium",
+      "coverage_tags": [
+        "边界与错误"
+      ],
+      "assertions": [
+        "应提示缺少版本字段"
+      ],
+      "expected_http_status_in": [
+        400,
+        422
+      ],
+      "response_contains": [
+        "版本",
+        "必填",
+        "字段",
+        "校验"
+      ],
+      "preconditions": [],
+      "negative_assertions": [],
+      "expected_gateway_code_in": [],
+      "variants": {},
+      "input_hints": [],
+      "response_not_contains": []
+    },
+    {
+      "action_id": "version_invalid",
+      "label": "版本字段错误",
+      "required": true,
+      "risk": "medium",
+      "coverage_tags": [
+        "边界与错误"
+      ],
+      "assertions": [
+        "应提示版本字段非法"
+      ],
+      "expected_http_status_in": [
+        400,
+        422
+      ],
+      "response_contains": [
+        "版本",
+        "非法",
+        "无效",
+        "校验"
+      ],
+      "preconditions": [],
+      "negative_assertions": [],
+      "expected_gateway_code_in": [],
+      "variants": {},
+      "input_hints": [],
+      "response_not_contains": []
+    },
+    {
+      "action_id": "param_missing",
+      "label": "缺少关键参数",
+      "required": true,
+      "risk": "medium",
+      "coverage_tags": [
+        "边界与错误"
+      ],
+      "assertions": [
+        "应提示缺少关键参数"
+      ],
+      "expected_http_status_in": [
+        400,
+        422
+      ],
+      "response_contains": [
+        "参数",
+        "必填",
+        "字段",
+        "校验"
+      ],
+      "preconditions": [],
+      "negative_assertions": [],
+      "expected_gateway_code_in": [],
+      "variants": {},
+      "input_hints": [],
+      "response_not_contains": []
+    },
+    {
+      "action_id": "param_invalid",
+      "label": "关键参数非法或越界",
+      "required": true,
+      "risk": "medium",
+      "coverage_tags": [
+        "边界与错误"
+      ],
+      "assertions": [
+        "应提示关键参数非法或越界"
+      ],
+      "expected_http_status_in": [
+        400,
+        422
+      ],
+      "response_contains": [
+        "参数",
+        "非法",
+        "越界",
+        "校验"
+      ],
+      "preconditions": [],
+      "negative_assertions": [],
+      "expected_gateway_code_in": [],
+      "variants": {},
+      "input_hints": [],
+      "response_not_contains": []
+    },
+    {
+      "action_id": "write_blocked",
+      "label": "写操作未确认",
+      "required": true,
+      "risk": "high",
+      "coverage_tags": [
+        "副作用确认"
+      ],
+      "assertions": [
+        "应拦截未确认写操作"
+      ],
+      "expected_http_status_in": [
+        400,
+        401,
+        403,
+        409,
+        422
+      ],
+      "response_contains": [
+        "确认",
+        "拒绝",
+        "风险",
+        "写操作"
+      ],
+      "preconditions": [],
+      "negative_assertions": [],
+      "expected_gateway_code_in": [],
+      "variants": {},
+      "input_hints": [],
+      "response_not_contains": []
+    },
+    {
+      "action_id": "write_confirmed",
+      "label": "写操作已确认",
+      "required": true,
+      "risk": "high",
+      "coverage_tags": [
+        "副作用确认"
+      ],
+      "assertions": [
+        "应在确认后继续执行"
+      ],
+      "expected_http_status_in": [
+        200,
+        201,
+        202
+      ],
+      "preconditions": [],
+      "negative_assertions": [],
+      "expected_gateway_code_in": [],
+      "variants": {},
+      "input_hints": [],
+      "response_contains": [],
+      "response_not_contains": []
+    }
+  ],
+  "transport": {
+    "gateway_url": "<GATEWAY_URL>",
+    "auth_env": "API_KEY",
+    "auth_header": "Authorization",
+    "auth_prefix": "Bearer ",
+    "timeout_sec": 60
+  },
+  "fields": {
+    "skill_id": "skill_id",
+    "skill_version": "_skill_version"
+  },
+  "request_mapping": {
+    "prompt_paths": [
+      "prompt",
+      "question",
+      "input",
+      "query",
+      "content",
+      "text"
+    ],
+    "action_paths": [
+      "action",
+      "operation",
+      "intent",
+      "mode",
+      "type",
+      "risk"
+    ],
+    "context_paths": [
+      "context",
+      "history",
+      "conversation"
+    ],
+    "case_id_paths": [
+      "meta.case_id",
+      "metadata.case_id"
+    ],
+    "variant_paths": [
+      "meta.variant",
+      "metadata.variant"
+    ],
+    "coverage_paths": [
+      "meta.coverage_tags",
+      "metadata.coverage_tags"
+    ],
+    "metadata_path": "meta"
+  },
+  "field_injection": {
+    "enabled": true
+  },
+  "risk": {
+    "default_mode": "ask",
+    "confirm_flag_fields": [
+      "confirm_write",
+      "requires_confirmation"
+    ],
+    "intent_fields": [
+      "action",
+      "operation",
+      "intent",
+      "mode",
+      "type",
+      "risk"
+    ],
+    "sensitive_keywords": [
+      "write",
+      "update",
+      "delete",
+      "create",
+      "publish",
+      "submit",
+      "approve",
+      "reject",
+      "execute",
+      "invoke",
+      "call",
+      "cancel",
+      "rollback"
+    ]
+  },
+  "response_mapping": {
+    "gateway_code_paths": [
+      "code",
+      "data.code",
+      "result.code",
+      "status.code"
+    ],
+    "message_paths": [
+      "message",
+      "data.message",
+      "result.message",
+      "status.message"
+    ],
+    "result_paths": [
+      "data.result",
+      "data.output",
+      "data.answer",
+      "data.content",
+      "result",
+      "output",
+      "answer",
+      "content",
+      "payload"
+    ],
+    "version_paths": [
+      "data.version_info",
+      "version_info",
+      "meta.version"
+    ]
+  },
+  "action_schema": {
+    "required_fields": [
+      "action_id",
+      "label",
+      "required",
+      "risk",
+      "coverage_tags"
+    ],
+    "recommended_fields": [
+      "preconditions",
+      "assertions",
+      "negative_assertions",
+      "expected_http_status_in",
+      "expected_gateway_code_in",
+      "response_contains",
+      "response_not_contains",
+      "variants",
+      "input_hints"
+    ],
+    "variant_names": [
+      "base",
+      "missing_preconditions",
+      "invalid_input",
+      "followup",
+      "blocked",
+      "confirmed"
+    ]
+  }
+}

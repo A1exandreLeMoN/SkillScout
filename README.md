@@ -3,9 +3,15 @@
 一个面向任意 Skill 的通用自动化测评框架。  
 当前实现以 `http_json` 适配器为默认执行模式，适合测试通过 HTTP 网关提供能力、并以 JSON 交换请求/响应的 Skill。
 
+## 目录结构
+
+- `README.md`：项目说明
+- `CHANGELOG.md`：发布记录
+- `skill/`：真正的 Skill 资产目录
+
 ## 这个项目能做什么
 
-- 读取 `skill-profile.template.json`
+- 读取 `skill/skill-profile.template.json`
 - 按 profile 自动生成测试用例
 - 合并手工用例矩阵
 - 执行批量测试
@@ -33,12 +39,12 @@
 
 ## 仓库文件说明
 
-- `invoke_test_skill.ps1`：核心 runner
-- `skill-profile.template.json`：技能画像模板
-- `test-case-matrix.template.json`：用例矩阵模板
-- `report.template.md`：报告模板
-- `SKILL.md`：Skill 本体说明
-- `payload.sample.json`：请求样例
+- `skill/invoke_test_skill.ps1`：核心 runner
+- `skill/skill-profile.template.json`：技能画像模板
+- `skill/test-case-matrix.template.json`：用例矩阵模板
+- `skill/report.template.md`：报告模板
+- `skill/SKILL.md`：Skill 本体说明
+- `skill/payload.sample.json`：请求样例
 
 ## 快速开始
 
@@ -51,12 +57,12 @@
 示例：
 
 ```powershell
-.\invoke_test_skill.ps1 `
+.\skill\invoke_test_skill.ps1 `
   -SkillId "demo-skill" `
   -SkillVersion "1.0.0" `
-  -PayloadFile ".\payload.sample.json" `
-  -ProfileFile ".\skill-profile.template.json" `
-  -CaseMatrixFile ".\test-case-matrix.template.json" `
+  -PayloadFile ".\skill\payload.sample.json" `
+  -ProfileFile ".\skill\skill-profile.template.json" `
+  -CaseMatrixFile ".\skill\test-case-matrix.template.json" `
   -GatewayUrl "http://127.0.0.1:8080/run" `
   -ApiKeyEnv "API_KEY" `
   -SensitiveMode "always_allow"
@@ -96,4 +102,3 @@
 - 本地端到端验证
 
 后续如果要扩展到更多 Skill 形态，可以继续增加新的 adapter，而不是把逻辑堆进 runner 里。
-
