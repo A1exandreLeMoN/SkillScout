@@ -1,46 +1,52 @@
 # SkillLens
 
-一个面向任意 Skill 的通用自动化测评框架。  
-当前实现以 `http_json` 适配器为默认执行模式，适合测试通过 HTTP 网关提供能力、并以 JSON 交换请求/响应的 Skill。
+SkillLens 是一个面向任意 Skill 的通用自动化测评框架，支持：
+
+- 根据 Skill Profile 自动发现目标
+- 按能力、Action、风险自动生成用例
+- 执行 HTTP/JSON 型 Skill 测试
+- 输出中文结构化报告与产物
+- 将**执行健康**与**覆盖完整性**分开判定
+
+> 核心原则：**覆盖率不等于通过。只要存在未解释的执行层错误，报告就必须显式标记为执行健康受损。**
 
 ## 目录结构
 
 - `README.md`：项目说明
 - `CHANGELOG.md`：发布记录
-- `skill/`：真正的 Skill 资产目录
+- `skill/`：Skill 运行所需的全部资产
 
 ## 这个项目能做什么
 
 - 读取 `skill/skill-profile.template.json`
 - 按 profile 自动生成测试用例
 - 合并手工用例矩阵
-- 执行批量测试
-- 统计能力覆盖、Action 覆盖和风险覆盖
-- 输出中文结构化报告与产物
+- 批量执行测试
+- 统计能力覆盖、Action 覆盖、风险覆盖
+- 单独统计执行错误、传输错误、HTTP 错误、无响应错误
+- 输出中文报告与机器可消费产物
 
-## 核心理念
+## 核心结构
 
-- **profile 负责描述 Skill**
-- **adapter 负责描述怎么执行这种 Skill**
-- **runner 负责通用执行、判定和落盘**
+- **Profile**：描述 Skill 的输入、输出、能力、Action、风险和默认策略
+- **Adapter**：描述 Skill 如何被执行、输入输出如何映射
+- **Runner**：负责执行、判定、落盘
+- **Report**：负责把结果讲清楚，尤其是执行健康
 
-这样可以把“业务描述”和“测试逻辑”分开，后续更容易适配不同类型的 Skill。
-
-## 当前支持的适配器
+## 当前支持的 Adapter
 
 ### `http_json`
 
-当前默认适配器，适用于：
+适用于：
 
-- HTTP 网关
-- JSON 请求 / 响应
-- 带鉴权头的远程 Skill
+- HTTP 网关型 Skill
+- JSON 请求 / 响应型 Skill
 - 具备 `action / capability / risk` 描述的 Skill
 
 ## 仓库文件说明
 
 - `skill/invoke_test_skill.ps1`：核心 runner
-- `skill/skill-profile.template.json`：技能画像模板
+- `skill/skill-profile.template.json`：Skill profile 模板
 - `skill/test-case-matrix.template.json`：用例矩阵模板
 - `skill/report.template.md`：报告模板
 - `skill/SKILL.md`：Skill 本体说明
@@ -48,16 +54,10 @@
 
 ## 快速开始
 
-1. 准备一个被测 Skill 的 profile
-2. 准备基础 payload
-3. 配置 `GatewayUrl` 和认证环境变量
-4. 执行 `invoke_test_skill.ps1`
-5. 查看 `report.md` 和 artifacts 产物
-
-示例：
+### 方式一：手动指定目标
 
 ```powershell
-.\skill\invoke_test_skill.ps1 `
+powershell -NoProfile -ExecutionPolicy Bypass -File .\skill\invoke_test_skill.ps1 `
   -SkillId "demo-skill" `
   -SkillVersion "1.0.0" `
   -PayloadFile ".\skill\payload.sample.json" `
@@ -68,22 +68,18 @@
   -SensitiveMode "always_allow"
 ```
 
-如果你想用自然语言让框架自动找目标 skill，也可以传：
+### 方式二：自然语言发现目标
 
 ```powershell
-.\skill\invoke_test_skill.ps1 `
+powershell -NoProfile -ExecutionPolicy Bypass -File .\skill\invoke_test_skill.ps1 `
   -TargetQuery "测试一下这个 skill" `
   -TargetRoot "." `
   -SensitiveMode "always_allow"
 ```
 
-默认情况下，产物会写到当前用户临时目录下的 `skilllens-artifacts*`，不会落到 `skill/` 目录；如需自定义，可传 `-OutputDir`。
+## 输出产物
 
-这时 runner 会尝试在工作区里自动发现最匹配的 skill 目录、profile 和 payload。
-
-## 输出内容
-
-运行后会生成一组中文可读、机器可消费的产物，例如：
+默认会在临时目录下生成产物，例如：
 
 - `cases.json`
 - `case.runs.json`
@@ -94,14 +90,20 @@
 - `matrix.resolved.json`
 - `report.md`
 
-## 覆盖原则
+## 覆盖与判定原则
 
-当前不是按固定数量验收，而是按以下维度判断完整性：
+SkillLens 不再用固定条数衡量完整性，而是看以下维度：
 
 - 能力覆盖
 - Action 覆盖
 - 风险覆盖
-- 必测项是否闭环
+- 执行健康
+
+### 重要说明
+
+- 覆盖完整不代表执行成功
+- 只要出现执行层错误，必须在报告里显式展示
+- 执行健康受损时，最终结论不得被覆盖率掩盖
 
 ## 当前状态
 
@@ -110,8 +112,8 @@
 - profile/schema 收口
 - Action 级覆盖
 - 自动 case 生成
-- `http_json` 适配器
-- 中文报告输出
-- 本地端到端验证
+- `http_json` adapter
+- 自然语言目标发现
+- 执行健康优先的报告契约
 
-后续如果要扩展到更多 Skill 形态，可以继续增加新的 adapter，而不是把逻辑堆进 runner 里。
+如果后续要支持更多 Skill 形态，只需要继续新增 adapter，而不要把业务逻辑继续堆进 runner。
