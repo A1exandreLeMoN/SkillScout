@@ -14,6 +14,7 @@ SkillLens 是一个面向任意 Skill 的通用自动化测评框架，支持：
 
 - `README.md`：项目说明
 - `CHANGELOG.md`：发布记录
+- `ROADMAP.md`：迭代路线图
 - `skill/`：Skill 运行所需的全部资产
 
 ## 这个项目能做什么
